@@ -76,7 +76,7 @@ function Install-Cygwin {
     $packageDir = Join-Path $script:WinTempDir 'cygwin-packages'
     $architecture = 'x86_64'
     $mingwHost = "$architecture-w64-mingw32"
-    $packages = "wget,file,make,unzip,dos2unix,patch,mingw64-$architecture-gcc-core,mingw64-$architecture-gcc-g++,mingw64-$architecture-headers,mingw64-$architecture-runtime"
+    $packages = "wget,file,make,unzip,dos2unix,patch,mingw64-$architecture-gcc-core,mingw64-$architecture-gcc-g++,mingw64-$architecture-headers,mingw64-$architecture-runtime,gdb"
     $argumentList = @(
         '-qnO',
         '-l', $packageDir,
