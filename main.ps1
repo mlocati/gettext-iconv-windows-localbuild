@@ -137,7 +137,7 @@ function Install-Iconv {
     } else {
         $flags='-g0 -O2'
     }
-    Invoke-Bash -WindowsPath $winBuildDir -Command "../configure CC='x86_64-w64-mingw32-gcc' CXX='x86_64-w64-mingw32-g++' LD='x86_64-w64-mingw32-ld' STRIP='x86_64-w64-mingw32-strip' CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601' CFLAGS='$($flags)' CXXFLAGS='$($flags) -fno-threadsafe-statics' LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib' --host=x86_64-w64-mingw32 --enable-relocatable --config-cache --disable-dependency-tracking --enable-nls --disable-rpath --disable-acl --enable-threads=windows --prefix=$($script:CygInstalledDir) --disable-shared --enable-static"
+    Invoke-Bash -WindowsPath $winBuildDir -Command "../configure CC='x86_64-w64-mingw32-gcc' CXX='x86_64-w64-mingw32-g++' LD='x86_64-w64-mingw32-ld' STRIP='x86_64-w64-mingw32-strip' CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601' CFLAGS='$($flags)' CXXFLAGS='$($flags) -fno-threadsafe-statics' LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib' --host=x86_64-w64-mingw32 --enable-relocatable --config-cache --disable-dependency-tracking --enable-nls --disable-rpath --disable-acl --enable-threads=windows --prefix=$($script:CygInstalledDir) --disable-shared --enable-static --enable-extra-encodings"
     Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
 }
 
@@ -236,6 +236,10 @@ function Invoke-Bash {
         '-c', "cd '$CygwinPath' && $Command"
     )
     & $script:CygwinPath\bin\bash.exe $argumentList
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        throw "Bash command failed with exit code $($exitCode): $Command"
+    }
 }
 
 function Apply-SrcPatches {
@@ -261,6 +265,9 @@ function Apply-SrcPatches {
         Invoke-Bash -WindowsPath $winSrcDir -Command "patch -p1 < '$cygPatch'"
     }
 }
+
+$env:CHERE_INVOKING = '1'
+$env:CYGWIN_NOWINPATH = '1'
 
 $script:IconvVersion = '1.18'
 $script:GettextVersion = '0.25.1'

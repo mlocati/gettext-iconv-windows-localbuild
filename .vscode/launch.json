@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "iconv 1.18",
+      "type": "cppvsdbg",
+      "cwd": "${workspaceRoot}\\src\\libiconv-1.18\\build\\src",
+      "request": "launch",
+      "program": "${workspaceRoot}\\src\\libiconv-1.18\\build\\src\\iconv.exe",
+      "args": ["--help"],
+      "environment": [
+        {
+          "name": "LANGUAGE",
+          "value": "it"
+        }
+      ]
+    }
+  ]
+}
