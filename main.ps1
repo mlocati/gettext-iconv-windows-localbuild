@@ -6,8 +6,10 @@ function Show-Menu {
     Write-Host '0. Install cygwin'
     Write-Host '1. Reset'
     Write-Host '2. Install iconv'
-    Write-Host '3. Install gettext'
-    Write-Host '4. Install iconv + gettext + iconv'
+    Write-Host '3. Install json-c'
+    Write-Host '4. Install curl'
+    Write-Host '5. Install gettext'
+    Write-Host '6. Install all'
     Write-Host "A. iconv version: $IconvVersion"
     Write-Host "B. gettext version: $gettextVersion"
     $debugText = if ($DebugMode) { 'on' } else { 'off' }
@@ -27,10 +29,20 @@ function Show-Menu {
                 Install-Iconv
             }
             '3' {
+                Install-JsonC
+            }
+            '4' {
+                Install-Curl
+            }
+            '5' {
                 Install-Gettext
             }
-            '4' { 
+            '6' { 
                 Install-Iconv
+                if (-not($script:GettextVersion.StartsWith('0.'))) {
+                    Install-JsonC
+                    Install-Curl
+                }
                 Install-Gettext
                 Install-Iconv
             }
@@ -76,7 +88,7 @@ function Install-Cygwin {
     $packageDir = Join-Path $script:WinTempDir 'cygwin-packages'
     $architecture = 'x86_64'
     $mingwHost = "$architecture-w64-mingw32"
-    $packages = "wget,file,make,unzip,dos2unix,patch,mingw64-$architecture-gcc-core,mingw64-$architecture-gcc-g++,mingw64-$architecture-headers,mingw64-$architecture-runtime,gdb"
+    $packages = "file,make,unzip,dos2unix,patch,mingw64-$architecture-gcc-core,mingw64-$architecture-gcc-g++,mingw64-$architecture-headers,mingw64-$architecture-runtime,cmake,gdb"
     $argumentList = @(
         '-qnO',
         '-l', $packageDir,
@@ -141,6 +153,67 @@ function Install-Iconv {
     Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
 }
 
+function Install-JsonC {
+    Ensure-Paths
+    $winSrcDir = Join-Path $script:WinSrcDir "json-c-$($script:JsonCVersion)"
+    if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
+        $winTarball = Join-Path $script:WinTempDir "json-c-$($script:JsonCVersion).tar.gz"
+        if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
+            Write-Host "Downloading json-c tarball..." -ForegroundColor Cyan
+            Invoke-WebRequest -Uri "https://s3.amazonaws.com/json-c_releases/releases/json-c-$($script:JsonCVersion)-nodoc.tar.gz" -OutFile $winTarball
+        }
+        Write-Host "Extracting json-c tarball..." -ForegroundColor Cyan
+        $cygTarball = ConvertTo-CygwinPath $winTarball
+        Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
+        Apply-SrcPatches "json-c-$($script:JsonCVersion)"
+    }
+    $winBuildDir = Join-Path $winSrcDir 'build'
+    if (Test-Path -Path $winBuildDir -PathType Container) {
+        Remove-Item -Path $winBuildDir -Recurse -Force
+    }
+    New-Item -Path $winBuildDir -ItemType Directory | Out-Null
+    Write-Host "Installing json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
+    if ($script:DebugMode) {
+        $flags='-g -O0'
+        $buildType='Debug'
+    } else {
+        $flags='-g0 -O2'
+        $buildType='Release'
+    }
+    Invoke-Bash -WindowsPath $winBuildDir -Command "cmake -DCMAKE_BUILD_TYPE=$buildType '-DCMAKE_INSTALL_PREFIX=$($script:CygInstalledDir)' -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DBUILD_TESTING=OFF -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_C_FLAGS='$flags' -DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF ../"
+    Invoke-Bash -WindowsPath $winBuildDir -Command 'make --jobs=1 all'
+    Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
+}
+
+function Install-Curl {
+    Ensure-Paths
+    $winSrcDir = Join-Path $script:WinSrcDir "curl-$($script:CurlVersion)"
+    if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
+        $winTarball = Join-Path $script:WinTempDir "curl-$($script:CurlVersion).tar.gz"
+        if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
+            Write-Host "Downloading curl tarball..." -ForegroundColor Cyan
+            Invoke-WebRequest -Uri "https://curl.se/download/curl-$($script:CurlVersion).tar.gz" -OutFile $winTarball
+        }
+        Write-Host "Extracting curl tarball..." -ForegroundColor Cyan
+        $cygTarball = ConvertTo-CygwinPath $winTarball
+        Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
+        Apply-SrcPatches "curl-$($script:CurlVersion)"
+    }
+    $winBuildDir = Join-Path $winSrcDir 'build'
+    if (Test-Path -Path $winBuildDir -PathType Container) {
+        Remove-Item -Path $winBuildDir -Recurse -Force
+    }
+    New-Item -Path $winBuildDir -ItemType Directory | Out-Null
+    Write-Host "Installing curl $($script:CurlVersion)..." -ForegroundColor Cyan
+    if ($script:DebugMode) {
+        $flags='-g -O0'
+    } else {
+        $flags='-g0 -O2'
+    }
+    Invoke-Bash -WindowsPath $winBuildDir -Command "../configure CC='x86_64-w64-mingw32-gcc' CXX='x86_64-w64-mingw32-g++' LD='x86_64-w64-mingw32-ld' STRIP='x86_64-w64-mingw32-strip' CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601' CFLAGS='$($flags)' CXXFLAGS='$($flags)' LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib' --host=x86_64-w64-mingw32 --enable-http --disable-ftp --enable-file --disable-ldap --disable-ldaps --disable-rtsp --enable-proxy --disable-ipfs --disable-dict --disable-telnet --disable-tftp --disable-pop3 --disable-imap --disable-smb --disable-smtp --disable-gopher --disable-mqtt --disable-manual --disable-docs --enable-ipv6 --enable-windows-unicode --disable-cookies --with-schannel --without-openssl --without-wolfssl --without-libpsl --with-winidn --disable-dependency-tracking --prefix=$($script:CygInstalledDir) --enable-static --disable-shared"
+    Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
+}
+
 function Install-Gettext {
     Ensure-Paths
     $winSrcDir = Join-Path $script:WinSrcDir "gettext-$($script:GettextVersion)"
@@ -166,7 +239,7 @@ function Install-Gettext {
     } else {
         $flags='-g0 -O2'
     }
-    Invoke-Bash -WindowsPath $winBuildDir -Command "../configure CC='x86_64-w64-mingw32-gcc' CXX='x86_64-w64-mingw32-g++' LD='x86_64-w64-mingw32-ld' STRIP='x86_64-w64-mingw32-strip' CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601' CFLAGS='$($flags)' CXXFLAGS='$($flags) -fno-threadsafe-statics' LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib' --host=x86_64-w64-mingw32 --enable-relocatable --config-cache --disable-dependency-tracking --enable-nls --disable-rpath --disable-acl --enable-threads=windows --prefix=$($script:CygInstalledDir) --disable-shared --enable-static --disable-java --disable-native-java --disable-openmp --disable-curses --disable-csharp --without-emacs --with-included-libxml --without-bzip2 --without-xz"
+    Invoke-Bash -WindowsPath $winBuildDir -Command "../configure LIBS='-lsecur32 -lnormaliz -lbcrypt -ladvapi32 -lcrypt32 -lws2_32 -liphlpapi' CC='x86_64-w64-mingw32-gcc' CXX='x86_64-w64-mingw32-g++' LD='x86_64-w64-mingw32-ld' STRIP='x86_64-w64-mingw32-strip' CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601' CFLAGS='$($flags)' CXXFLAGS='$($flags) -fno-threadsafe-statics' LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib' --host=x86_64-w64-mingw32 --enable-relocatable --config-cache --disable-dependency-tracking --enable-nls --disable-rpath --disable-acl --enable-threads=windows --prefix=$($script:CygInstalledDir) --disable-shared --enable-static --disable-java --disable-native-java --disable-openmp --disable-curses --disable-csharp --without-emacs --with-included-libxml --without-bzip2 --without-xz"
     Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
 }
 
@@ -269,10 +342,12 @@ function Apply-SrcPatches {
 $env:CHERE_INVOKING = '1'
 $env:CYGWIN_NOWINPATH = '1'
 
-$script:IconvVersion = '1.18'
-$script:GettextVersion = '0.25.1'
+$script:IconvVersion = '1.17'
+$script:CurlVersion = '8.18.0'
+$script:JsonCVersion = '0.18'
+$script:GettextVersion = '1.0-pre1'
 $script:DebugMode = $true
-$script:CygwinPath = 'C:\cygwin'
+$script:CygwinPath = 'D:\cygwin'
 $script:WinTempDir = Join-Path  $PSScriptRoot 'temp'
 $script:CygTempDir = ConvertTo-CygwinPath $script:WinTempDir
 $script:WinSrcDir = Join-Path $PSScriptRoot 'src'

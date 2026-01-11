@@ -24,6 +24,31 @@
           "ignoreFailures": true
         }
       ]
+    },
+       {
+      "name": "xgettext 0.25.1",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceRoot}\\src\\gettext-0.25.1\\build\\gettext-tools\\src\\xgettext.exe",
+      "args": ["--help"],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "it"
+        }
+      ],
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:\\cygwin\\bin\\gdb.exe",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
+ 
   ]
 }
