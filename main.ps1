@@ -235,6 +235,7 @@ function Install-JsonC {
         "-DCMAKE_C_FLAGS='$flags'",
         '-DDISABLE_THREAD_LOCAL_STORAGE=ON',
         '-DENABLE_THREADING=OFF',
+        '-DBUILD_APPS=OFF',
         $(if ($script:Link -eq 'static') { '-DBUILD_STATIC_LIBS=ON' } else { '-DBUILD_SHARED_LIBS=ON' }),
         $(if ($script:Link -eq 'static') { '-DBUILD_SHARED_LIBS=OFF' } else { '-DBUILD_STATIC_LIBS=OFF' }),
         '../'
