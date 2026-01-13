@@ -96,13 +96,13 @@ function Reset-Sources {
 
 function Install-Cygwin {
     Initialize-Paths
-    $exe = Join-Path $script:WinTempDir 'cygwin-installer.exe'
+    $exe = Join-Paths $script:WinTempDir 'cygwin-installer.exe'
     if (-not(Test-Path -Path $exe -PathType Leaf)) {
         Write-Host "Downloading Cygwin installer..." -ForegroundColor Cyan
         Invoke-WebRequest -Uri 'https://cygwin.com/setup-x86_64.exe' -OutFile $exe
     }
     Write-Host "Installing Cygwin..." -ForegroundColor Cyan
-    $packageDir = Join-Path $script:WinTempDir 'cygwin-packages'
+    $packageDir = Join-Paths $script:WinTempDir 'cygwin-packages'
     if ($script:Bitness -eq 32) {
         $mingwArchitecture = 'i686'
     } else {
@@ -134,7 +134,7 @@ function Install-Cygwin {
     } else {
         $homeDir = $dirs.FullName
     }
-    $bashProfilePath = Join-Path $homeDir '.bash_profile'
+    $bashProfilePath = Join-Paths $homeDir '.bash_profile'
     $bashProfileContent = @(
         'source "${HOME}/.bashrc"',
         "PATH=$($script:CygInstalledDir):/usr/$($script:MingWHost)/bin:/usr/$($script:MingWHost)/sys-root/mingw/bin:/usr/sbin:/usr/bin:/sbin:/bin:/cygdrive/c/Windows/System32:/cygdrive/c/Windows",
@@ -146,9 +146,9 @@ function Install-Cygwin {
 
 function Install-Iconv {
     Initialize-Paths
-    $winSrcDir = Join-Path $script:WinSrcDir "libiconv-$($script:IconvVersion)"
+    $winSrcDir = Join-Paths $script:WinSrcDir "libiconv-$($script:IconvVersion)"
     if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
-        $winTarball = Join-Path $script:WinTempDir "libiconv-$($script:IconvVersion).tar.gz"
+        $winTarball = Join-Paths $script:WinTempDir "libiconv-$($script:IconvVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-Host "Downloading iconv tarball..." -ForegroundColor Cyan
             Invoke-WebRequest -Uri "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-$($script:IconvVersion).tar.gz" -OutFile $winTarball
@@ -158,7 +158,7 @@ function Install-Iconv {
         Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
         Invoke-PatchSource "libiconv-$($script:IconvVersion)"
     }
-    $winBuildDir = Join-Path $winSrcDir 'build'
+    $winBuildDir = Join-Paths $winSrcDir 'build'
     if (Test-Path -Path $winBuildDir -PathType Container) {
         Remove-Item -Path $winBuildDir -Recurse -Force
     }
@@ -200,9 +200,9 @@ function Install-Iconv {
 
 function Install-JsonC {
     Initialize-Paths
-    $winSrcDir = Join-Path $script:WinSrcDir "json-c-$($script:JsonCVersion)"
+    $winSrcDir = Join-Paths $script:WinSrcDir "json-c-$($script:JsonCVersion)"
     if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
-        $winTarball = Join-Path $script:WinTempDir "json-c-$($script:JsonCVersion).tar.gz"
+        $winTarball = Join-Paths $script:WinTempDir "json-c-$($script:JsonCVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-Host "Downloading json-c tarball..." -ForegroundColor Cyan
             Invoke-WebRequest -Uri "https://s3.amazonaws.com/json-c_releases/releases/json-c-$($script:JsonCVersion)-nodoc.tar.gz" -OutFile $winTarball
@@ -212,7 +212,7 @@ function Install-JsonC {
         Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
         Invoke-PatchSource "json-c-$($script:JsonCVersion)"
     }
-    $winBuildDir = Join-Path $winSrcDir 'build'
+    $winBuildDir = Join-Paths $winSrcDir 'build'
     if (Test-Path -Path $winBuildDir -PathType Container) {
         Remove-Item -Path $winBuildDir -Recurse -Force
     }
@@ -245,9 +245,9 @@ function Install-JsonC {
 
 function Install-Curl {
     Initialize-Paths
-    $winSrcDir = Join-Path $script:WinSrcDir "curl-$($script:CurlVersion)"
+    $winSrcDir = Join-Paths $script:WinSrcDir "curl-$($script:CurlVersion)"
     if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
-        $winTarball = Join-Path $script:WinTempDir "curl-$($script:CurlVersion).tar.gz"
+        $winTarball = Join-Paths $script:WinTempDir "curl-$($script:CurlVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-Host "Downloading curl tarball..." -ForegroundColor Cyan
             Invoke-WebRequest -Uri "https://curl.se/download/curl-$($script:CurlVersion).tar.gz" -OutFile $winTarball
@@ -257,7 +257,7 @@ function Install-Curl {
         Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
         Invoke-PatchSource "curl-$($script:CurlVersion)"
     }
-    $winBuildDir = Join-Path $winSrcDir 'build'
+    $winBuildDir = Join-Paths $winSrcDir 'build'
     if (Test-Path -Path $winBuildDir -PathType Container) {
         Remove-Item -Path $winBuildDir -Recurse -Force
     }
@@ -324,20 +324,20 @@ function Install-Curl {
     Write-Host "curl features:" -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command './curl-config --features'
     Write-Host "Building curl $($script:CurlVersion) - lib..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'lib') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'lib') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
     Write-Host "Installing curl $($script:CurlVersion) - lib..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'lib') -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'lib') -Command 'make install'
     Write-Host "Building curl $($script:CurlVersion) - include..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'include') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
     Write-Host "Installing curl $($script:CurlVersion) - include..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'include') -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command 'make install'
 }
 
 function Install-Gettext {
     Initialize-Paths
-    $winSrcDir = Join-Path $script:WinSrcDir "gettext-$($script:GettextVersion)"
+    $winSrcDir = Join-Paths $script:WinSrcDir "gettext-$($script:GettextVersion)"
     if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
-        $winTarball = Join-Path $script:WinTempDir "gettext-$($script:GettextVersion).tar.gz"
+        $winTarball = Join-Paths $script:WinTempDir "gettext-$($script:GettextVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-Host "Downloading gettext tarball..." -ForegroundColor Cyan
             Invoke-WebRequest -Uri "https://ftp.gnu.org/pub/gnu/gettext/gettext-$($script:GettextVersion).tar.gz" -OutFile $winTarball
@@ -347,7 +347,7 @@ function Install-Gettext {
         Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
         Invoke-PatchSource "gettext-$($script:GettextVersion)"
     }
-    $winBuildDir = Join-Path $winSrcDir 'build'
+    $winBuildDir = Join-Paths $winSrcDir 'build'
     if (Test-Path -Path $winBuildDir -PathType Container) {
         Remove-Item -Path $winBuildDir -Recurse -Force
     }
@@ -360,7 +360,7 @@ function Install-Gettext {
     $libs = ''
     if (-not($script:GettextVersion.StartsWith('0.'))) {
         $flags += ' -DCURL_STATICLIB'
-        $libs = Invoke-Bash -WindowsPath $(Join-Path $script:WinSrcDir "curl-$($script:CurlVersion)" 'build') -Command './curl-config --static-libs' -CaptureOutput $true
+        $libs = Invoke-Bash -WindowsPath $(Join-Paths $script:WinSrcDir "curl-$($script:CurlVersion)" 'build') -Command './curl-config --static-libs' -CaptureOutput $true
     }
     Write-Host "Configuring gettext $GettextVersion..." -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
@@ -398,21 +398,21 @@ function Install-Gettext {
 
     ) -join ' ')
     Write-Host "Building gettext/gnulib-local $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gnulib-local')  -Command 'make'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gnulib-local')  -Command 'make'
     Write-Host "Installing gettext/gnulib-local $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gnulib-local')  -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gnulib-local')  -Command 'make install'
     Write-Host "Building gettext/gettext-runtime $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gettext-runtime')  -Command 'make'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-runtime')  -Command 'make'
     Write-Host "Installing gettext/gettext-runtime $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gettext-runtime')  -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-runtime')  -Command 'make install'
     Write-Host "Building gettext/libtextstyle $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'libtextstyle')  -Command 'make'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'libtextstyle')  -Command 'make'
     Write-Host "Installing gettext/libtextstyle $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'libtextstyle')  -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'libtextstyle')  -Command 'make install'
     Write-Host "Building gettext/gettext-tools $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gettext-tools')  -Command 'make'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-tools')  -Command 'make'
     Write-Host "Installing gettext/gettext-tools $GettextVersion..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $(Join-Path $winBuildDir 'gettext-tools')  -Command 'make install'
+    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-tools')  -Command 'make install'
 }
 
 function Set-IconvVersion {
@@ -506,7 +506,7 @@ function Invoke-PatchSource {
         [Parameter(Mandatory = $true)]
         [string] $DirName
     )
-    $patchesDir = Join-Path (Join-Path $PSScriptRoot 'patches') $DirName
+    $patchesDir = Join-Paths $PSScriptRoot 'patches' $DirName
     if (-not (Test-Path -Path $patchesDir -PathType Container)) {
         return
     }
@@ -520,9 +520,18 @@ function Invoke-PatchSource {
     foreach ($patch in $patches) {
         Write-Host "Applying patch: $($patch.Name)" -ForegroundColor Cyan 
         $cygPatch = ConvertTo-CygwinPath $patch.FullName
-        $winSrcDir = Join-Path $script:WinSrcDir $DirName
+        $winSrcDir = Join-Paths $script:WinSrcDir $DirName
         Invoke-Bash -WindowsPath $winSrcDir -Command "patch -p1 < '$cygPatch'"
     }
+}
+
+function Join-Paths {
+    param(
+        [Parameter(Mandatory, ValueFromRemainingArguments)]
+        [string[]] $Paths
+    )
+
+    [System.IO.Path]::Combine($Paths)
 }
 
 function Set-Enviro {
@@ -542,9 +551,9 @@ function Set-Enviro {
         $script:MingWHost = 'x86_64-w64-mingw32'
     }
     $script:CygwinPath = "D:\cygwin$Bitness"
-    $script:WinSrcDir = Join-Path $PSScriptRoot "$Bitness-$Link" 'src'
+    $script:WinSrcDir = Join-Paths $PSScriptRoot "$Bitness-$Link" 'src'
     $script:CygSrcDir = ConvertTo-CygwinPath $script:WinSrcDir
-    $script:WinInstalledDir = Join-Path $PSScriptRoot "$Bitness-$Link" 'installed'
+    $script:WinInstalledDir = Join-Paths $PSScriptRoot "$Bitness-$Link" 'installed'
     $script:CygInstalledDir = ConvertTo-CygwinPath $script:WinInstalledDir
 }
 
@@ -556,7 +565,7 @@ $script:CurlVersion = '8.18.0'
 $script:JsonCVersion = '0.18'
 $script:GettextVersion = '1.0-pre2'
 $script:DebugMode = $true
-$script:WinTempDir = Join-Path  $PSScriptRoot 'temp'
+$script:WinTempDir = Join-Paths $PSScriptRoot 'temp'
 $script:CygTempDir = ConvertTo-CygwinPath $script:WinTempDir
 
 Set-Enviro -Bitness 64 -Link 'shared'
