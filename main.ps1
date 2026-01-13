@@ -234,6 +234,7 @@ function Install-JsonC {
         "-DCMAKE_C_COMPILER=$($script:MingWHost)-gcc",
         "-DCMAKE_C_FLAGS='$flags'",
         '-DDISABLE_THREAD_LOCAL_STORAGE=ON',
+        '-DCMAKE_SYSTEM_NAME=Windows',
         '-DENABLE_THREADING=OFF',
         '-DBUILD_APPS=OFF',
         $(if ($script:Link -eq 'static') { '-DBUILD_STATIC_LIBS=ON' } else { '-DBUILD_SHARED_LIBS=ON' }),
