@@ -7,8 +7,8 @@ function Show-Menu {
     Write-Host '0. Install cygwin'
     Write-Host '1. Reset'
     Write-Host '2. Install iconv'
-    Write-Host '3. Install json-c'
-    Write-Host '4. Install curl'
+    Write-Host '3. Install curl'
+    Write-Host '4. Install json-c'
     Write-Host '5. Install gettext'
     Write-Host '6. Install all'
     Write-Host "A. iconv version: $IconvVersion"
@@ -32,10 +32,10 @@ function Show-Menu {
                 Install-Iconv
             }
             '3' {
-                Install-JsonC
+                Install-Curl
             }
             '4' {
-                Install-Curl
+                Install-JsonC
             }
             '5' {
                 Install-Gettext
@@ -43,8 +43,8 @@ function Show-Menu {
             '6' { 
                 Install-Iconv
                 if (-not($script:GettextVersion.StartsWith('0.'))) {
-                    Install-JsonC
                     Install-Curl
+                    Install-JsonC
                 }
                 Install-Gettext
                 Install-Iconv
@@ -198,55 +198,6 @@ function Install-Iconv {
     Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
 }
 
-function Install-JsonC {
-    Initialize-Paths
-    $winSrcDir = Join-Paths $script:WinSrcDir "json-c-$($script:JsonCVersion)"
-    if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
-        $winTarball = Join-Paths $script:WinTempDir "json-c-$($script:JsonCVersion).tar.gz"
-        if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
-            Write-Host "Downloading json-c tarball..." -ForegroundColor Cyan
-            Invoke-WebRequest -Uri "https://s3.amazonaws.com/json-c_releases/releases/json-c-$($script:JsonCVersion)-nodoc.tar.gz" -OutFile $winTarball
-        }
-        Write-Host "Extracting json-c tarball..." -ForegroundColor Cyan
-        $cygTarball = ConvertTo-CygwinPath $winTarball
-        Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
-        Invoke-PatchSource "json-c-$($script:JsonCVersion)"
-    }
-    $winBuildDir = Join-Paths $winSrcDir 'build'
-    if (Test-Path -Path $winBuildDir -PathType Container) {
-        Remove-Item -Path $winBuildDir -Recurse -Force
-    }
-    New-Item -Path $winBuildDir -ItemType Directory | Out-Null
-    if ($script:DebugMode) {
-        $flags = '-g -O0'
-        $buildType = 'Debug'
-    } else {
-        $flags = '-g0 -O2'
-        $buildType = 'Release'
-    }
-    Write-Host "Configuring json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
-        'cmake',
-        "-DCMAKE_BUILD_TYPE=$buildType",
-        "'-DCMAKE_INSTALL_PREFIX=$($script:CygInstalledDir)'",
-        '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
-        '-DBUILD_TESTING=OFF',
-        "-DCMAKE_C_COMPILER=$($script:MingWHost)-gcc",
-        "-DCMAKE_C_FLAGS='$flags'",
-        '-DDISABLE_THREAD_LOCAL_STORAGE=ON',
-        '-DCMAKE_SYSTEM_NAME=Windows',
-        '-DENABLE_THREADING=OFF',
-        '-DBUILD_APPS=OFF',
-        $(if ($script:Link -eq 'static') { '-DBUILD_STATIC_LIBS=ON' } else { '-DBUILD_SHARED_LIBS=ON' }),
-        $(if ($script:Link -eq 'static') { '-DBUILD_SHARED_LIBS=OFF' } else { '-DBUILD_STATIC_LIBS=OFF' }),
-        '../'
-    ) -join ' ')
-    Write-Host "Building json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $winBuildDir -Command "make --jobs=$([System.Environment]::ProcessorCount) all"
-    Write-Host "Installing json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
-}
-
 function Install-Curl {
     Initialize-Paths
     $winSrcDir = Join-Paths $script:WinSrcDir "curl-$($script:CurlVersion)"
@@ -335,6 +286,55 @@ function Install-Curl {
     Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
     Write-Host "Installing curl $($script:CurlVersion) - include..." -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command 'make install'
+}
+
+function Install-JsonC {
+    Initialize-Paths
+    $winSrcDir = Join-Paths $script:WinSrcDir "json-c-$($script:JsonCVersion)"
+    if (-not(Test-Path -Path $winSrcDir -PathType Container)) {
+        $winTarball = Join-Paths $script:WinTempDir "json-c-$($script:JsonCVersion).tar.gz"
+        if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
+            Write-Host "Downloading json-c tarball..." -ForegroundColor Cyan
+            Invoke-WebRequest -Uri "https://s3.amazonaws.com/json-c_releases/releases/json-c-$($script:JsonCVersion)-nodoc.tar.gz" -OutFile $winTarball
+        }
+        Write-Host "Extracting json-c tarball..." -ForegroundColor Cyan
+        $cygTarball = ConvertTo-CygwinPath $winTarball
+        Invoke-Bash -WindowsPath $script:WinSrcDir -Command "tar -xzf '$cygTarball'"
+        Invoke-PatchSource "json-c-$($script:JsonCVersion)"
+    }
+    $winBuildDir = Join-Paths $winSrcDir 'build'
+    if (Test-Path -Path $winBuildDir -PathType Container) {
+        Remove-Item -Path $winBuildDir -Recurse -Force
+    }
+    New-Item -Path $winBuildDir -ItemType Directory | Out-Null
+    if ($script:DebugMode) {
+        $flags = '-g -O0'
+        $buildType = 'Debug'
+    } else {
+        $flags = '-g0 -O2'
+        $buildType = 'Release'
+    }
+    Write-Host "Configuring json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
+    Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
+        'cmake',
+        "-DCMAKE_BUILD_TYPE=$buildType",
+        "'-DCMAKE_INSTALL_PREFIX=$($script:CygInstalledDir)'",
+        '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
+        '-DBUILD_TESTING=OFF',
+        "-DCMAKE_C_COMPILER=$($script:MingWHost)-gcc",
+        "-DCMAKE_C_FLAGS='$flags'",
+        '-DDISABLE_THREAD_LOCAL_STORAGE=ON',
+        '-DCMAKE_SYSTEM_NAME=Windows',
+        '-DENABLE_THREADING=OFF',
+        '-DBUILD_APPS=OFF',
+        $(if ($script:Link -eq 'static') { '-DBUILD_STATIC_LIBS=ON' } else { '-DBUILD_SHARED_LIBS=ON' }),
+        $(if ($script:Link -eq 'static') { '-DBUILD_SHARED_LIBS=OFF' } else { '-DBUILD_STATIC_LIBS=OFF' }),
+        '../'
+    ) -join ' ')
+    Write-Host "Building json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
+    Invoke-Bash -WindowsPath $winBuildDir -Command "make --jobs=$([System.Environment]::ProcessorCount) all"
+    Write-Host "Installing json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
+    Invoke-Bash -WindowsPath $winBuildDir -Command 'make install'
 }
 
 function Install-Gettext {
