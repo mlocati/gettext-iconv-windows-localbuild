@@ -246,7 +246,7 @@ function Install-Curl {
         "--host=$($script:MingWHost)",
         '--enable-http',
         '--disable-ftp',
-        '--enable-file',
+        '--disable-file',
         '--disable-ldap',
         '--disable-ldaps',
         '--disable-rtsp',
@@ -285,7 +285,7 @@ function Install-Curl {
         $(if ($script:Link -eq 'static') { '--disable-shared' } else { '--disable-static' })
     ) -join ' ')
     Write-Host "Static libraries to be included into gettext:" -ForegroundColor Cyan
-    Invoke-Bash -WindowsPath $winBuildDir -Command './curl-config --static-libs'
+    Invoke-Bash -WindowsPath $winBuildDir -Command "./curl-config $(if ($script:Link -eq 'static') { '--static-libs' } else { '--libs' })"
     Write-Host "curl features:" -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command './curl-config --features'
     Write-Host "Building curl $($script:CurlVersion) - lib..." -ForegroundColor Cyan
