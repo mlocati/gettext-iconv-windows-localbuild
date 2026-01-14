@@ -168,6 +168,11 @@ function Install-Iconv {
     } else {
         $flags='-g0 -O2'
     }
+    if ($script:Bitness -eq 32 -and $script:Link -eq 'shared') {
+        $ldFlags = '-static-libgcc'
+    } else {
+        $ldFlags = ''
+    }
     Write-Host "Configuring iconv $IconvVersion..." -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
         '../configure',
@@ -178,7 +183,7 @@ function Install-Iconv {
         "CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/$($script:MingWHost)/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601'",
         "CFLAGS='$($flags)'",
         "CXXFLAGS='$($flags) -fno-threadsafe-statics'",
-        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib'",
+        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib $ldFlags'",
         "--host=$($script:MingWHost)",
         '--enable-relocatable',
         '--config-cache',
@@ -222,6 +227,11 @@ function Install-Curl {
     } else {
         $flags='-g0 -O2'
     }
+    if ($script:Bitness -eq 32 -and $script:Link -eq 'shared') {
+        $ldFlags = '-static-libgcc'
+    } else {
+        $ldFlags = ''
+    }
     Write-Host "Configuring curl $($script:CurlVersion)..." -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
         '../configure',
@@ -232,7 +242,7 @@ function Install-Curl {
         "CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/$($script:MingWHost)/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601'",
         "CFLAGS='$($flags)'",
         "CXXFLAGS='$($flags)'",
-        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib'",
+        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib $ldFlags'",
         "--host=$($script:MingWHost)",
         '--enable-http',
         '--disable-ftp',
@@ -314,6 +324,11 @@ function Install-JsonC {
         $flags = '-g0 -O2'
         $buildType = 'Release'
     }
+    if ($script:Bitness -eq 32 -and $script:Link -eq 'shared') {
+        $ldFlags = '-static-libgcc'
+    } else {
+        $ldFlags = ''
+    }
     Write-Host "Configuring json-c $($script:JsonCVersion)..." -ForegroundColor Cyan
     Invoke-Bash -WindowsPath $winBuildDir -Command $(@(
         'cmake',
@@ -327,6 +342,7 @@ function Install-JsonC {
         '-DCMAKE_SYSTEM_NAME=Windows',
         '-DENABLE_THREADING=OFF',
         '-DBUILD_APPS=OFF',
+        "-DCMAKE_SHARED_LINKER_FLAGS='$ldFlags'"
         $(if ($script:Link -eq 'static') { '-DBUILD_STATIC_LIBS=ON' } else { '-DBUILD_SHARED_LIBS=ON' }),
         $(if ($script:Link -eq 'static') { '-DBUILD_SHARED_LIBS=OFF' } else { '-DBUILD_STATIC_LIBS=OFF' }),
         '../'
@@ -361,6 +377,11 @@ function Install-Gettext {
     } else {
         $flags='-g0 -O2'
     }
+    if ($script:Bitness -eq 32 -and $script:Link -eq 'shared') {
+        $ldFlags = '-static-libgcc'
+    } else {
+        $ldFlags = ''
+    }
     $libs = ''
     if (-not($script:GettextVersion.StartsWith('0.'))) {
         $flags += ' -DCURL_STATICLIB'
@@ -377,7 +398,7 @@ function Install-Gettext {
         "CPPFLAGS='-I$($script:CygInstalledDir)/include -I/usr/$($script:MingWHost)/sys-root/mingw/include -DWINVER=0x0601 -D_WIN32_WINNT=0x0601'",
         "CFLAGS='$($flags)'",
         "CXXFLAGS='$($flags) -fno-threadsafe-statics'",
-        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib'",
+        "LDFLAGS='-L$($script:CygInstalledDir)/lib -L/usr/$($script:MingWHost)/sys-root/mingw/lib $ldFlags'",
         "--host=$($script:MingWHost)",
         '--enable-relocatable',
         '--config-cache',
