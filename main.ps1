@@ -443,22 +443,12 @@ function Install-Gettext {
         '--disable-csharp',
         "LIBS='$libs'"
     ) -join ' ')
-    Write-SectionStep 'Building gettext/gnulib-local'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gnulib-local')  -Command 'make'
-    Write-SectionStep 'Installing gettext/gnulib-local'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gnulib-local')  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
-    Write-SectionStep 'Building gettext/gettext-runtime'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-runtime')  -Command 'make'
-    Write-SectionStep 'Installing gettext/gettext-runtime'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-runtime')  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
-    Write-SectionStep 'Building gettext/libtextstyle'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'libtextstyle')  -Command 'make'
-    Write-SectionStep 'Installing gettext/libtextstyle'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'libtextstyle')  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
-    Write-SectionStep 'Building gettext/gettext-tools'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-tools')  -Command 'make'
-    Write-SectionStep 'Installing gettext/gettext-tools'
-    Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'gettext-tools')  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
+    foreach ($subdir in @('gnulib-local', 'gettext-runtime', 'libtextstyle', 'gettext-tools')) {
+        Write-SectionStep "Building gettext/$subdir"
+        Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir $subdir)  -Command 'make'
+        Write-SectionStep "Installing gettext/$subdir"
+        Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir $subdir)  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
+    }
 }
 
 function Set-IconvVersion {
