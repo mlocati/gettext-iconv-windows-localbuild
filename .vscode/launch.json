@@ -25,7 +25,7 @@
         }
       ]
     },
-       {
+    {
       "name": "xgettext 0.25.1",
       "type": "cppdbg",
       "request": "launch",
@@ -48,7 +48,38 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "spit 1.0-pre2 (64-static)",
+      "type": "cppdbg",
+      "request": "launch",
+      "externalConsole": true,
+      "program": "${workspaceRoot}\\64-static\\src\\gettext-1.0-pre2\\build\\gettext-tools\\src\\spit.exe",
+      "additionalSOLibSearchPath": "${workspaceRoot}\\64-static\\installed\\bin",
+      "args": [
+        "--species=ollama",
+        "--url=http://localhost:11434",
+        "--model=llama3.2:3b",
+        "--to=it",
+      ],
+      "cwd": "${workspaceRoot}\\64-static\\installed\\bin",
+      "stopAtEntry": true,
+      "targetArchitecture": "x64",
+      "environment": [
+        {
+          "name": "LANG",
+          "value": "it"
+        }
+      ],
+      "MIMode": "gdb",
+      "miDebuggerPath": "${workspaceRoot}\\cygwin\\bin\\gdb.exe",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
- 
   ]
 }
