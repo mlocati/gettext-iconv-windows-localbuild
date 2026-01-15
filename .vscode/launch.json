@@ -16,7 +16,7 @@
         }
       ],
       "MIMode": "gdb",
-      "miDebuggerPath": "C:\\cygwin\\bin\\gdb.exe",
+      "miDebuggerPath": "${workspaceRoot}\\cygwin\\bin\\gdb.exe",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",
@@ -40,7 +40,7 @@
         }
       ],
       "MIMode": "gdb",
-      "miDebuggerPath": "C:\\cygwin\\bin\\gdb.exe",
+      "miDebuggerPath": "${workspaceRoot}\\cygwin\\bin\\gdb.exe",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",

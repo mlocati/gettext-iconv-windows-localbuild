@@ -113,6 +113,9 @@ function Install-Cygwin {
         'dos2unix',
         'patch',
         'cmake',
+        # Required for building curl with --enable-debug
+        'perl', 
+        # Required for debugging
         'gdb'
     );
     foreach ($mingwArchitecture in @('i686', 'x86_64')) {
@@ -136,6 +139,10 @@ function Install-Cygwin {
     }
     Write-SectionStep 'Configuring Cygwin'
     Invoke-Bash -WindowsPath $script:CygwinPath -Command "exit"
+    Update-CygwinEnvironment
+}
+
+function Update-CygwinEnvironment {
     $dirs = Get-ChildItem -Path "$($script:CygwinPath)\home" -Directory
     if (-not($dirs)) {
         throw "No home directories found in $($script:CygwinPath)\home"
@@ -151,7 +158,7 @@ function Install-Cygwin {
     $bashProfilePath = Join-Paths $homeDir '.bash_profile'
     $bashProfileContent = @(
         'source "${HOME}/.bashrc"',
-        "PATH=$($script:CygInstalledDir):/usr/$($script:MingWHost)/bin:/usr/$($script:MingWHost)/sys-root/mingw/bin:/usr/sbin:/usr/bin:/sbin:/bin:/cygdrive/c/Windows/System32:/cygdrive/c/Windows",
+        "PATH=$($script:CygInstalledDir)/bin:/usr/$($script:MingWHost)/bin:/usr/$($script:MingWHost)/sys-root/mingw/bin:/usr/sbin:/usr/bin:/sbin:/bin:/cygdrive/c/Windows/System32:/cygdrive/c/Windows",
         'export PATH',
         ''
     ) -join "`n"
@@ -580,7 +587,7 @@ function Write-Section {
         [string] $Text
     )
     $line = '=' * ($Text.Length + 4)
-    Write-Host "`n$line`n= $Text =`n$line" -ForegroundColor Yellow -BackgroundColor Red -NoNewline
+    Write-Host "`n$line`n= $Text =`n$line" -ForegroundColor Yellow -BackgroundColor Blue -NoNewline
     Write-Host ''
 }
 
@@ -612,6 +619,9 @@ function Set-Enviro {
     $script:CygSrcDir = ConvertTo-CygwinPath $script:WinSrcDir
     $script:WinInstalledDir = Join-Paths $PSScriptRoot "$Bitness-$Link" 'installed'
     $script:CygInstalledDir = ConvertTo-CygwinPath $script:WinInstalledDir
+    if (Test-Path -Path $script:CygwinPath -PathType Container) {
+        Update-CygwinEnvironment
+    }
 }
 
 $env:CHERE_INVOKING = '1'
@@ -621,7 +631,7 @@ $script:IconvVersion = '1.17'
 $script:CurlVersion = '8.18.0'
 $script:JsonCVersion = '0.18'
 $script:GettextVersion = '1.0-pre2'
-$script:DebugMode = $false
+$script:DebugMode = $true
 $script:CygwinPath = Join-Paths $PSScriptRoot 'cygwin'
 $script:WinTempDir = Join-Paths $PSScriptRoot 'temp'
 $script:CygTempDir = ConvertTo-CygwinPath $script:WinTempDir
