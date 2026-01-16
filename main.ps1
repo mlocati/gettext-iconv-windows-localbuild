@@ -214,6 +214,7 @@ function Install-Iconv {
     Invoke-Bash -WindowsPath $winBuildDir -Command 'make'
     Write-SectionStep 'Installing iconv'
     Invoke-Bash -WindowsPath $winBuildDir -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
+    Write-SectionStep 'Done with iconv'
 }
 
 function Install-Curl {
@@ -312,6 +313,7 @@ function Install-Curl {
     Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command "make --jobs=$([System.Environment]::ProcessorCount)"
     Write-SectionStep 'Installing include files'
     Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir 'include') -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
+    Write-SectionStep 'Done with curl'
 }
 
 function Install-JsonC {
@@ -368,6 +370,7 @@ function Install-JsonC {
     Invoke-Bash -WindowsPath $winBuildDir -Command "make --jobs=$([System.Environment]::ProcessorCount) all"
     Write-SectionStep 'Installing json-c'
     Invoke-Bash -WindowsPath $winBuildDir -Command "make $(if ($script:DebugMode) { 'install' } else { 'install/strip' })"
+    Write-SectionStep 'Done with json-c'
 }
 
 function Install-Gettext {
@@ -447,6 +450,7 @@ function Install-Gettext {
         Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir $subdir)  -Command 'make'
         Write-SectionStep "Installing gettext/$subdir"
         Invoke-Bash -WindowsPath $(Join-Paths $winBuildDir $subdir)  -Command "make $(if ($script:DebugMode) { 'install' } else { 'install-strip' })"
+        Write-SectionStep "Done with gettext/$subdir"
     }
 }
 
@@ -565,7 +569,6 @@ function Join-Paths {
         [Parameter(Mandatory, ValueFromRemainingArguments)]
         [string[]] $Paths
     )
-
     [System.IO.Path]::Combine($Paths)
 }
 
@@ -575,7 +578,11 @@ function Write-Section {
         [string] $Text
     )
     $line = '=' * ($Text.Length + 4)
-    Write-Host "`n$line`n= $Text =`n$line" -ForegroundColor Yellow -BackgroundColor Blue -NoNewline
+    Write-Host $line -ForegroundColor Yellow -BackgroundColor Blue -NoNewline
+    Write-Host ''
+    Write-Host "= $Text =" -ForegroundColor Yellow -BackgroundColor Blue -NoNewline
+    Write-Host ''
+    Write-Host $line -ForegroundColor Yellow -BackgroundColor Blue -NoNewline
     Write-Host ''
 }
 
@@ -584,7 +591,8 @@ function Write-SectionStep {
         [Parameter(Mandatory = $true)]
         [string] $Text
     )
-    Write-Host "---- $Text ----" -ForegroundColor Yellow -BackgroundColor DarkBlue
+    Write-Host "---- $Text ----" -ForegroundColor Yellow -BackgroundColor DarkBlue -NoNewline
+    Write-Host ''
 }
 
 function Set-Enviro {
