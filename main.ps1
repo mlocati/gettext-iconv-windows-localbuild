@@ -56,21 +56,13 @@ function Show-Menu {
                 Set-GettextVersion
             }
             'C' {
-                Switch-Debug
+                Set-Enviro -Bitness 32 -Link $script:Link -DebugMode (-not $script:DebugMode)
             }
             'D' {
-                if ($script:Bitness -eq 64) {
-                    Set-Enviro -Bitness 32 -Link $script:Link
-                } else {
-                    Set-Enviro -Bitness 64 -Link $script:Link
-                }
+                Set-Enviro -Bitness $(if ($script:Bitness -eq 64) { 32 } else { 64 }) -Link $script:Link -DebugMode $script:DebugMode
             }
             'E' {
-                if ($script:Link -eq 'static') {
-                    Set-Enviro -Bitness $script:Bitness -Link 'shared'
-                } else {
-                    Set-Enviro -Bitness $script:Bitness -Link 'static'
-                }
+                Set-Enviro -Bitness $script:Bitness -Link $(if ($script:Link -eq 'static') { 'shared' } else { 'static' }) -DebugMode $script:DebugMode
             }
             'Q' {
                 break 2
@@ -478,10 +470,6 @@ function Set-GettextVersion {
     }
 }
 
-function Switch-Debug {
-    $script:DebugMode = -not $script:DebugMode
-}
-
 function ConvertTo-CygwinPath()
 {
     [OutputType([string])]
@@ -606,18 +594,21 @@ function Set-Enviro {
         [int] $Bitness,
         [Parameter(Mandatory = $true)]
         [ValidateSet('static', 'shared')]
-        [string] $Link
+        [string] $Link,
+        [Parameter(Mandatory = $true)]
+        [bool] $DebugMode
     )
     $script:Bitness = $Bitness
     $script:Link = $Link
+    $script:DebugMode = $DebugMode
     if ($Bitness -eq 32) {
         $script:MingWHost = 'i686-w64-mingw32'
     } else {
         $script:MingWHost = 'x86_64-w64-mingw32'
     }
-    $script:WinSrcDir = Join-Paths $PSScriptRoot "$Bitness-$Link" 'src'
+    $script:WinSrcDir = Join-Paths $PSScriptRoot 'w' "$Bitness-$Link-$(if ($DebugMode) { 'debug' } else { 'release' })" 'src'
     $script:CygSrcDir = ConvertTo-CygwinPath $script:WinSrcDir
-    $script:WinInstalledDir = Join-Paths $PSScriptRoot "$Bitness-$Link" 'installed'
+    $script:WinInstalledDir = Join-Paths $PSScriptRoot 'w' "$Bitness-$Link-$(if ($DebugMode) { 'debug' } else { 'release' })" 'installed'
     $script:CygInstalledDir = ConvertTo-CygwinPath $script:WinInstalledDir
     if (Test-Path -Path $script:CygwinPath -PathType Container) {
         Update-CygwinEnvironment
@@ -631,11 +622,10 @@ $script:IconvVersion = '1.17'
 $script:CurlVersion = '8.18.0'
 $script:JsonCVersion = '0.18'
 $script:GettextVersion = '1.0-pre2'
-$script:DebugMode = $true
 $script:CygwinPath = Join-Paths $PSScriptRoot 'cygwin'
 $script:WinTempDir = Join-Paths $PSScriptRoot 'temp'
 $script:CygTempDir = ConvertTo-CygwinPath $script:WinTempDir
 
-Set-Enviro -Bitness 32 -Link 'shared'
+Set-Enviro -Bitness 32 -Link 'shared' -DebugMode $false
 
 Show-Menu
