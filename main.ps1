@@ -165,7 +165,12 @@ function Install-Iconv {
         $winTarball = Join-Paths $script:WinTempDir "libiconv-$($script:IconvVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-SectionStep 'Downloading iconv tarball'
-            Invoke-WebRequest -Uri "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-$($script:IconvVersion).tar.gz" -OutFile $winTarball
+            if ($script:IconvVersion -match 'alpha|pre|rc') {
+                $url = "https://alpha.gnu.org/gnu/libiconv/libiconv-$($script:IconvVersion).tar.gz"
+            } else {
+                $url = "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-$($script:IconvVersion).tar.gz"
+            }
+            Invoke-WebRequest -Uri $url -OutFile $winTarball
         }
         Write-SectionStep 'Extracting iconv tarball'
         $cygTarball = ConvertTo-CygwinPath $winTarball
@@ -382,7 +387,12 @@ function Install-Gettext {
         $winTarball = Join-Paths $script:WinTempDir "gettext-$($script:GettextVersion).tar.gz"
         if (-not(Test-Path -Path $winTarball -PathType Leaf)) {
             Write-SectionStep 'Downloading gettext tarball'
-            Invoke-WebRequest -Uri "https://ftp.gnu.org/pub/gnu/gettext/gettext-$($script:GettextVersion).tar.gz" -OutFile $winTarball
+            if ($script:GettextVersion -match 'alpha|pre|rc') {
+                $url = "https://alpha.gnu.org/gnu/gettext/gettext-$($script:GettextVersion).tar.gz"
+            } else {
+                $url = "https://ftp.gnu.org/pub/gnu/gettext/gettext-$($script:GettextVersion).tar.gz"
+            }
+            Invoke-WebRequest -Uri $url -OutFile $winTarball
         }
         Write-SectionStep 'Extracting gettext tarball'
         $cygTarball = ConvertTo-CygwinPath $winTarball
